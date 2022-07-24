@@ -1,6 +1,6 @@
 # 差分隐私Lecture
 
-> 2022.07.20-2022.07.21
+> 2022.07.20-2022.07.23
 >
 > Written By 思思不羡仙.
 
@@ -23,9 +23,11 @@ Netflix为了构建其推荐引擎，举办竞赛并提供了一个数据集（�
 ### 3. 神经网络的训练集
 
 在文本语料库Y（可能包含敏感信息）上训练神经网络模型，并创建生成序列模型$f(θ)$，给定一个序列$x_1,x_2,...,x_n$，模型能够计算：
+
 $$
 P_\theta(x_1,...,x_n)=-\textrm{log}_2\textrm{Pr}(x_1,...,x_n|f_\theta)=\sum^{n}_{i=1}(-\textrm{log}_2\textrm{Pr}(x_i|f_\theta(x_1,...,x_n)))
 $$
+
 这个量$P_θ$被称为序列的对数困惑度（perplexity），如果社会安全代码（SSN）被分配了低困惑度，会出现两个问题
 
 #### 3.1 两个问题
@@ -114,46 +116,60 @@ My SSN is XXX（正确的）My SSN is XXX（错误的），对比上述两个句
 这里通过一个例子，假设分析师想要统计一个班里有多少个人作弊，有如下定义，$n$个人，个体$i$，隐私$X_i \in \{0,1\}$（此处代表是否作弊），每个人发出一条信息$Y_i$，其值与$X_i$有关，分析师想要获取$p=\frac{1}{n}\sum_{i=1}^{n}X_i$，有以下几种情况：
 
 **情况一：完全没有隐私**
+
 $$
 Y_i = \left\{\begin{matrix}
  Xi \space \space \textrm{with probability 1}\\ 1-Xi \space \space \textrm{with probability 0}
 \end{matrix}\right.
 $$
+
 由$\tilde{p}=\frac{1}{n}\sum_{i=1}^{n}Y_i$可以发现，由于$Y_i$与$X_i$相同，故而$\tilde{p}=p$
 
 **情况二：完全没有统计意义**
+
 $$
 Y_i = \left\{\begin{matrix}
  Xi \space \space \textrm{with probability 1/2}\\ 1-Xi \space \space \textrm{with probability 1/2}
 \end{matrix}\right.
 $$
+
 由$\tilde{Z}=\frac{1}{n}\sum_{i=1}^{n}Y_i$可以被表示为二项分布，其概率与统计量$X_i$毫无关联，是没有意义的
 
 **情况三：随机响应**
 
 为了使具有隐私的统计量$Y_i$不走向两个极端，这里新定义一种统计方法：
+
 $$
 Y_i = \left\{\begin{matrix}
  Xi \space \space \textrm{with probability }1/2 + \gamma\\ 1-Xi \space \space \textrm{with probability }1/2 - \gamma
 \end{matrix}\right.
 $$
+
 在这里可以看到两种特殊情况：若是$\gamma=\frac{1}{2}$，那么这与情况一一致，若是$\gamma=0$，那么与情况二一致，其余情况则是择中，此处我们假设$\gamma=\frac{1}{4}$，那么大概率在询问$Y_i$时其值会等于$X_i$，这在一定程度上保护了隐私，我们继续分析
+
 $$
 E[Y_i]=2\gamma X_i+\frac{1}{2}-\gamma
 $$
+
 可以得到：
+
 $$
 X_i=E
 \left [\frac{1}{2\gamma}(Y_i-\frac{1}{2}+\gamma)\right]
 $$
+
 则有：
+
 $$
 \tilde{p}=\frac{1}{n}\sum_{i=1}^{n}\left[\frac{1}{2\gamma}(Y_i-\frac{1}{2}+\gamma) \right]
 $$
+
 从上述式子可以看出：$E[\tilde{p}]=p$，接下来我们来分析其方差：
+
 $$
 \bold{Var}[\tilde{p}]=\bold{Var}\left[\frac{1}{n}\sum_{i=1}^{n}\left[\frac{1}{2\gamma}(Y_i-\frac{1}{2}+\gamma) \right]\right]=\frac{1}{4\gamma^2n^2}\sum_{i=1}^{n}\bold{Var}[Y_i]\le\frac{1}{16\gamma^2n}
 $$
+
 由上述可知，当$n$越大时，单个$\gamma$可以越小，也就是当样本数量大时，在某种程度上说隐私可以更好地被保护
 
 ### 2. 差分隐私
@@ -167,9 +183,30 @@ $$
 \textrm{Pr}[M(X)\in T] \le e^{\varepsilon}\textrm{Pr}[M(X')\in T]
 $$
 
-> 后续笔记放在B篇
 
+#### 2.2 一些技术评论
 
+（1）差异隐私本质上是定量的，$\varepsilon$小的隐私保护性强
+
+（2）$\varepsilon \in [0.1,5]$被认为是正常的，超出此范围的定义我们应抱有怀疑态度
+
+（3）这是一种最坏打算的保障（这里要求的$X$与$X'$实际上非常严格）
+
+（4）为什么是$\varepsilon$而不是$(1 \pm \varepsilon)$，如果$\varepsilon$很小，则$e^\varepsilon\approx (1+\varepsilon )$，这样定义另外一个原因是有：$e^{\varepsilon_1}\cdot e^{\varepsilon_2} = e^{\varepsilon_1+\varepsilon_2}$，有利于组隐私的计算
+
+（5）数据集$X$改变一个点变为$X'$，这叫做有界差分隐私，若是添加一个数据或删除一个数据则被称为无界差分隐私
+
+#### 2.3 假设检验
+
+攻击者试图从以下两种情况做出决定，其中$X$和$X’$是相邻数据集，并且保证这两者之一成立：$H_0$基于数据集$X$，$H_1$基于数据集$X'$；根据数据集运行算法$M$，攻击者视图确定$H_0$与$H_1$是否为真，差分隐私表明对⼿不应该⽐随机猜测获得显着优势
+
+设$p$是当$H_0$为真时对手预测$H_1$的概率，$q$为当$H_1$为真时对手预测$H_0$的概率，对于差分隐私而言可以推断出：
+$$
+p+e^\varepsilon q\ge1
+\\
+e^\varepsilon p+q \ge 1
+$$
+当 $ε = 0$ 时，攻击者本质上仅限于忽略数据并随机猜测，随着 $ε$ 的增加，它使对⼿有可能获得⼀些优于盲目猜测的优势
 
 
 

@@ -23,6 +23,7 @@ $x_i$：节点i的取值
 $N_i$：图中节点的一阶所有邻居节点集合，$j\in N_i$表示节点$i$的一个一阶邻居节点
 
 **推导：**
+
 $$
 \begin{align}
 \Delta f_{x_i}&=\sum_{j\in N_i}(x_i-x_j)\\
@@ -31,13 +32,16 @@ $$
 &=x_i\sum_{j\in N}a_{ij} - \sum_{j\in N}a_{ij}x_j
 \end{align}
 $$
+
 注意到，$\sum_{j\in N}a_{ij}$可以看作第$i$个节点的度之和，也可以看作邻接矩阵$A$的第$i$行的$A_i$进行替换后：
+
 $$
 \begin{align}
 &=x_iD_i-\sum_{j \in N}a_{ij}x_j\\
 &=x_iD_i-A_iX
 \end{align}
 $$
+
 单元素可以推导到整个矩阵，算子$\Delta f = DX-AX=(D-A)X$
 
 ### $Kalman$滤波器
@@ -50,39 +54,46 @@ $$
 其分布中心$μ$就是$\hat{x_k}=\begin{bmatrix}
 \textrm{position} \\\textrm{velocity}
 \end{bmatrix}$，对于方差$\delta^2$ ，因为我们有两个变量，所以可以用一个协方差矩阵$\bold{P}_k$表示：
+
 $$
 \bold{P}_k=\begin{bmatrix}
 \sum_{pp}& \sum_{pv}\\\sum_{vp}& \sum_{vv}
 \end{bmatrix}
 $$
+
 所以$x$的真实状态可能就位于上图椭圆的范围内，位于圆心的概率最大，通过$k-1$时刻的位置和速度，可以推测下一个时刻的状态为：
+
 $$
 \begin{align}
 &p_k=p_{k-1}+\Delta tv_{k-1}
 \\&v_k=v_{k-1}
 \end{align}
 $$
+
 写成矩阵形式就是：
+
 $$
 \hat{x_k}=\begin{bmatrix}
 1 & \Delta t \\ 
 0 & 1 \\ 
 \end{bmatrix}x_{k-1}=F_k\hat{x}_{k-1}
 $$
+
 此处的$F_k$为**状态转移矩阵**，系统误差通过协方差$P_k$表示，根据协方差特性：
+
 $$
 Cov(x)=\sum
 \\Cov(Ax)=A\sum A^T
 $$
 
-
 那么我们所预测的$x$下一个时刻的状态误差为：
+
 $$
 P_k=F_kP_{k-1}F^T_{k}
 $$
 
-
 为了能让$x$到达任何地方，毫无疑问我们需要对它进行控制，比如加速和减速，假设某个时刻我们施加给$x$的加速度是$\bold{a}$那么下一时刻的位置和速度则应该为：
+
 $$
 \begin{align}
 &p_k=p_{k-1}+\Delta tv_{k-1}+\frac{1}{2}a\Delta t^2
@@ -90,22 +101,27 @@ $$
 &v_k= v_k-1+a\Delta t
 \end{align}
 $$
+
 因此我们的状态预测方程更新为：
+
 $$
 \hat{x_k}=F_x\hat{x}_{k-1}+\begin{bmatrix}
 \frac{\Delta t^2}{2}\\\Delta t
 \end{bmatrix}a\\
 =F_x\hat{x}_{k-1}+B_ku_k
 $$
+
 $B_k$称为**状态控制矩阵**，而$u_k$称为**状态控制向量**，含义很明显，前者表明的是加速减速如何改变$x$的状态，而后者则表明控制的力度大小和方向
 
 同时在此考虑外部误差，设外部误差$w_k$服从均值为0高斯分布$w_k \sim N(0,Q_k)$至此我们就能得到Kalman滤波中完整的**状态预测方程**：
+
 $$
 \begin{align}
 &\hat{x_k}=F_k\hat{x}_{k-1}+B_ku_k+w_k\\
 &P_k=F_kP_{k-1}F_k^T+Q_k
 \end{align}
 $$
+
 ![img](Note.assets/v2-04a2a817c9a0bbbea75b7c0395a9b92d_720w.jpg)
 
 **卡尔曼滤波需要做的最重要的最核心的事就是融合预测和观测的结果，充分利用两者的不确定性来得到更加准确的估计**，通俗来说就是怎么从上面的两个椭圆中来得到中间淡黄色部分的高斯分布，看起来这是预测和观测高斯分布的重合部分，也就是概率比较高的部分
